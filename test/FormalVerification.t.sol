@@ -119,13 +119,13 @@ contract FormalVerificationTest is Test {
         if (direction) {
             token0.transfer(address(pair), amountIn);
             try pair.swap(0, amountOut, address(this), "") {}
-                catch {
+            catch {
                 return;
             }
         } else {
             token1.transfer(address(pair), amountIn);
             try pair.swap(amountOut, 0, address(this), "") {}
-                catch {
+            catch {
                 return;
             }
         }
@@ -151,7 +151,7 @@ contract FormalVerificationTest is Test {
 
         token0.transfer(address(pair), amountIn);
         try pair.swap(0, out1, address(this), "") {}
-            catch {
+        catch {
             return;
         }
 
@@ -162,7 +162,7 @@ contract FormalVerificationTest is Test {
 
         token1.transfer(address(pair), out1);
         try pair.swap(out0, 0, address(this), "") {}
-            catch {
+        catch {
             return;
         }
 
