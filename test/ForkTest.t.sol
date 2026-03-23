@@ -36,7 +36,7 @@ contract ForkTest is Test {
         deal(WETH, alice, 100 ether);
         deal(USDC, alice, 1_000_000 * 1e6); // 1M USDC (6 decimals)
         deal(USDT, alice, 1_000_000 * 1e6); // 1M USDT (6 decimals)
-        deal(WBTC, alice, 100 * 1e8);       // 100 WBTC (8 decimals)
+        deal(WBTC, alice, 100 * 1e8); // 100 WBTC (8 decimals)
 
         // Approve router
         vm.startPrank(alice);
@@ -56,13 +56,8 @@ contract ForkTest is Test {
     function test_fork_wethUsdc_addLiquidityAndSwap() public {
         // Add liquidity: 10 WETH + 25,000 USDC (roughly $2500/ETH)
         vm.startPrank(alice);
-        (uint256 amountA, uint256 amountB, uint256 liquidity) = router.addLiquidity(
-            WETH, USDC,
-            10 ether, 25_000 * 1e6,
-            0, 0,
-            alice, block.timestamp + 1,
-            0
-        );
+        (uint256 amountA, uint256 amountB, uint256 liquidity) =
+            router.addLiquidity(WETH, USDC, 10 ether, 25_000 * 1e6, 0, 0, alice, block.timestamp + 1, 0);
         vm.stopPrank();
 
         assertGt(liquidity, 0, "No LP tokens minted for WETH/USDC");
@@ -77,9 +72,7 @@ contract ForkTest is Test {
 
         uint256 usdcBefore = IERC20(USDC).balanceOf(alice);
         vm.prank(alice);
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            0.1 ether, 0, path, alice, block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(0.1 ether, 0, path, alice, block.timestamp + 1);
 
         uint256 usdcReceived = IERC20(USDC).balanceOf(alice) - usdcBefore;
         assertGt(usdcReceived, 0, "No USDC received from swap");
@@ -92,13 +85,8 @@ contract ForkTest is Test {
         // USDT doesn't return bool on transfer - our _safeTransfer handles this
         // Add USDT/USDC liquidity (stablecoin pair, both 6 decimals)
         vm.startPrank(alice);
-        (,, uint256 liquidity) = router.addLiquidity(
-            USDT, USDC,
-            100_000 * 1e6, 100_000 * 1e6,
-            0, 0,
-            alice, block.timestamp + 1,
-            0
-        );
+        (,, uint256 liquidity) =
+            router.addLiquidity(USDT, USDC, 100_000 * 1e6, 100_000 * 1e6, 0, 0, alice, block.timestamp + 1, 0);
         vm.stopPrank();
 
         assertGt(liquidity, 0, "No LP tokens minted for USDT/USDC");
@@ -111,9 +99,7 @@ contract ForkTest is Test {
 
         uint256 usdtBefore = IERC20(USDT).balanceOf(alice);
         vm.prank(alice);
-        router.swapExactTokensForTokens(
-            1000 * 1e6, 0, path, alice, block.timestamp + 1
-        );
+        router.swapExactTokensForTokens(1000 * 1e6, 0, path, alice, block.timestamp + 1);
 
         uint256 usdtReceived = IERC20(USDT).balanceOf(alice) - usdtBefore;
         assertGt(usdtReceived, 0, "No USDT received - safeTransfer may have failed");
@@ -126,10 +112,14 @@ contract ForkTest is Test {
         // Add WBTC/WETH liquidity (8 and 18 decimals)
         vm.startPrank(alice);
         (,, uint256 liquidity) = router.addLiquidity(
-            WBTC, WETH,
-            10 * 1e8, 100 ether, // ~10 BTC : 100 ETH
-            0, 0,
-            alice, block.timestamp + 1,
+            WBTC,
+            WETH,
+            10 * 1e8,
+            100 ether, // ~10 BTC : 100 ETH
+            0,
+            0,
+            alice,
+            block.timestamp + 1,
             0
         );
         vm.stopPrank();
@@ -145,7 +135,11 @@ contract ForkTest is Test {
         uint256 wethBefore = IERC20(WETH).balanceOf(alice);
         vm.prank(alice);
         router.swapExactTokensForTokens(
-            1e6, 0, path, alice, block.timestamp + 1 // 0.01 WBTC
+            1e6,
+            0,
+            path,
+            alice,
+            block.timestamp + 1 // 0.01 WBTC
         );
 
         uint256 wethReceived = IERC20(WETH).balanceOf(alice) - wethBefore;
@@ -175,7 +169,11 @@ contract ForkTest is Test {
         uint256 usdcBefore = IERC20(USDC).balanceOf(alice);
         vm.prank(alice);
         uint256[] memory amounts = router.swapExactTokensForTokens(
-            1e6, 0, path, alice, block.timestamp + 1 // 0.01 WBTC (small enough for circuit breaker)
+            1e6,
+            0,
+            path,
+            alice,
+            block.timestamp + 1 // 0.01 WBTC (small enough for circuit breaker)
         );
 
         assertEq(amounts.length, 3, "Multi-hop should have 3 amounts");
@@ -201,9 +199,8 @@ contract ForkTest is Test {
 
     function test_fork_removeLiquidity_realTokens() public {
         vm.startPrank(alice);
-        (,, uint256 liquidity) = router.addLiquidity(
-            WETH, USDC, 10 ether, 25_000 * 1e6, 0, 0, alice, block.timestamp + 1, 0
-        );
+        (,, uint256 liquidity) =
+            router.addLiquidity(WETH, USDC, 10 ether, 25_000 * 1e6, 0, 0, alice, block.timestamp + 1, 0);
 
         address pair = factory.getPair(WETH, USDC);
         IERC20(pair).approve(address(router), liquidity);

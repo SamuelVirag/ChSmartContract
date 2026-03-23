@@ -11,22 +11,14 @@ library ChLibrary {
     uint256 private constant BPS = 10000;
 
     /// @notice Sort two token addresses into canonical order
-    function sortTokens(address tokenA, address tokenB)
-        internal
-        pure
-        returns (address token0, address token1)
-    {
+    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         require(tokenA != tokenB, "ChLibrary: IDENTICAL_ADDRESSES");
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), "ChLibrary: ZERO_ADDRESS");
     }
 
     /// @notice Compute the CREATE2 address for a pair
-    function pairFor(address factory, address tokenA, address tokenB)
-        internal
-        pure
-        returns (address pair)
-    {
+    function pairFor(address factory, address tokenA, address tokenB) internal pure returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pair = address(
             uint160(
@@ -52,18 +44,13 @@ library ChLibrary {
     {
         (address token0,) = sortTokens(tokenA, tokenB);
         (uint112 reserve0, uint112 reserve1,) = IChPair(pairFor(factory, tokenA, tokenB)).getReserves();
-        (reserveA, reserveB) = tokenA == token0
-            ? (uint256(reserve0), uint256(reserve1))
-            : (uint256(reserve1), uint256(reserve0));
+        (reserveA, reserveB) =
+            tokenA == token0 ? (uint256(reserve0), uint256(reserve1)) : (uint256(reserve1), uint256(reserve0));
     }
 
     /// @notice Fetch the current dynamic swap fee for a pair
     /// @return feeBps Fee in basis points
-    function getSwapFee(address factory, address tokenA, address tokenB)
-        internal
-        view
-        returns (uint256 feeBps)
-    {
+    function getSwapFee(address factory, address tokenA, address tokenB) internal view returns (uint256 feeBps) {
         feeBps = IChPair(pairFor(factory, tokenA, tokenB)).getSwapFee();
     }
 
@@ -141,11 +128,7 @@ library ChLibrary {
     }
 
     /// @notice Calculate optimal tokenB amount for a deposit
-    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
-        internal
-        pure
-        returns (uint256 amountB)
-    {
+    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) internal pure returns (uint256 amountB) {
         require(amountA > 0, "ChLibrary: INSUFFICIENT_AMOUNT");
         require(reserveA > 0 && reserveB > 0, "ChLibrary: INSUFFICIENT_LIQUIDITY");
         amountB = (amountA * reserveB) / reserveA;

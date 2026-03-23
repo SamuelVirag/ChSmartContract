@@ -26,9 +26,7 @@ contract ChPairTest is Test {
         MockERC20 tokenB = new MockERC20("Token B", "TKB", 18);
 
         // Ensure token0 < token1 for consistent ordering
-        (token0, token1) = address(tokenA) < address(tokenB)
-            ? (tokenA, tokenB)
-            : (tokenB, tokenA);
+        (token0, token1) = address(tokenA) < address(tokenB) ? (tokenA, tokenB) : (tokenB, tokenA);
 
         address pairAddr = factory.createPair(address(token0), address(token1));
         pair = ChPair(pairAddr);
@@ -482,11 +480,7 @@ contract ChPairTest is Test {
         vm.stopPrank();
     }
 
-    function _getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256) {
         return _getAmountOutWithFee(amountIn, reserveIn, reserveOut, 30);
     }
 

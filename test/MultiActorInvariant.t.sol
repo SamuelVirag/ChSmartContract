@@ -115,7 +115,8 @@ contract MultiActorHandler is Test {
         amountIn = bound(amountIn, 1e3, maxSwap);
 
         // Calculate output with MAX_FEE to ensure K check passes
-        uint256 amountOut = (amountIn * (10000 - MAX_FEE) * uint256(r1)) / (uint256(r0) * 10000 + amountIn * (10000 - MAX_FEE));
+        uint256 amountOut =
+            (amountIn * (10000 - MAX_FEE) * uint256(r1)) / (uint256(r0) * 10000 + amountIn * (10000 - MAX_FEE));
         if (amountOut == 0 || amountOut >= r1) return;
 
         vm.startPrank(actor);
@@ -144,7 +145,8 @@ contract MultiActorHandler is Test {
         if (maxSwap < 1e3) return;
         amountIn = bound(amountIn, 1e3, maxSwap);
 
-        uint256 amountOut = (amountIn * (10000 - MAX_FEE) * uint256(r0)) / (uint256(r1) * 10000 + amountIn * (10000 - MAX_FEE));
+        uint256 amountOut =
+            (amountIn * (10000 - MAX_FEE) * uint256(r0)) / (uint256(r1) * 10000 + amountIn * (10000 - MAX_FEE));
         if (amountOut == 0 || amountOut >= r0) return;
 
         vm.startPrank(actor);
@@ -277,16 +279,8 @@ contract MultiActorInvariantTest is StdInvariant, Test {
 
         // Total withdrawn cannot exceed total that entered the pool + initial seed (100 ether each).
         // The pool can only redistribute existing tokens; it cannot create new ones.
-        assertLe(
-            totalW0,
-            totalIn0 + 100 ether,
-            "INVARIANT: more token0 withdrawn globally than entered pool"
-        );
-        assertLe(
-            totalW1,
-            totalIn1 + 100 ether,
-            "INVARIANT: more token1 withdrawn globally than entered pool"
-        );
+        assertLe(totalW0, totalIn0 + 100 ether, "INVARIANT: more token0 withdrawn globally than entered pool");
+        assertLe(totalW1, totalIn1 + 100 ether, "INVARIANT: more token1 withdrawn globally than entered pool");
     }
 
     // ============ INVARIANT 5: FEE BOUNDS ============

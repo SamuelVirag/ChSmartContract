@@ -62,15 +62,7 @@ contract ChRouterTest is Test {
     function test_addLiquidity() public {
         vm.startPrank(alice);
         (uint256 amountA, uint256 amountB, uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            10 ether,
-            10 ether,
-            0,
-            0,
-            alice,
-            block.timestamp + 1,
-            0
+            address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0
         );
         vm.stopPrank();
 
@@ -83,9 +75,7 @@ contract ChRouterTest is Test {
         assertEq(factory.getPair(address(tokenA), address(tokenB)), address(0));
 
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         assertTrue(factory.getPair(address(tokenA), address(tokenB)) != address(0));
     }
@@ -93,15 +83,12 @@ contract ChRouterTest is Test {
     function test_addLiquidity_proportional() public {
         // First deposit
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 20 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 20 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         // Second deposit — should be proportional
         vm.prank(bob);
-        (uint256 amountA, uint256 amountB,) = router.addLiquidity(
-            address(tokenA), address(tokenB), 5 ether, 20 ether, 0, 0, bob, block.timestamp + 1, 0
-        );
+        (uint256 amountA, uint256 amountB,) =
+            router.addLiquidity(address(tokenA), address(tokenB), 5 ether, 20 ether, 0, 0, bob, block.timestamp + 1, 0);
 
         assertEq(amountA, 5 ether);
         assertEq(amountB, 10 ether); // proportional: 5 * 20/10 = 10
@@ -109,9 +96,8 @@ contract ChRouterTest is Test {
 
     function test_addLiquidityETH() public {
         vm.prank(alice);
-        (uint256 amountToken, uint256 amountETH, uint256 liquidity) = router.addLiquidityETH{value: 5 ether}(
-            address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        (uint256 amountToken, uint256 amountETH, uint256 liquidity) =
+            router.addLiquidityETH{value: 5 ether}(address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         assertEq(amountToken, 10 ether);
         assertEq(amountETH, 5 ether);
@@ -121,16 +107,12 @@ contract ChRouterTest is Test {
     function test_addLiquidityETH_refundsExcess() public {
         vm.prank(alice);
         // First, create the pool
-        router.addLiquidityETH{value: 5 ether}(
-            address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 5 ether}(address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         uint256 balanceBefore = alice.balance;
         vm.prank(alice);
         // Add more with excess ETH
-        router.addLiquidityETH{value: 10 ether}(
-            address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 10 ether}(address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0);
         uint256 balanceAfter = alice.balance;
 
         // Should get refund — only 5 ETH needed to match 10 tokenA at 2:1 ratio
@@ -152,9 +134,7 @@ contract ChRouterTest is Test {
         uint256 tokenABefore = tokenA.balanceOf(alice);
         uint256 tokenBBefore = tokenB.balanceOf(alice);
 
-        router.removeLiquidity(
-            address(tokenA), address(tokenB), liquidity, 0, 0, alice, block.timestamp + 1
-        );
+        router.removeLiquidity(address(tokenA), address(tokenB), liquidity, 0, 0, alice, block.timestamp + 1);
         vm.stopPrank();
 
         assertGt(tokenA.balanceOf(alice) - tokenABefore, 0);
@@ -163,17 +143,14 @@ contract ChRouterTest is Test {
 
     function test_removeLiquidityETH() public {
         vm.startPrank(alice);
-        (,, uint256 liquidity) = router.addLiquidityETH{value: 5 ether}(
-            address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        (,, uint256 liquidity) =
+            router.addLiquidityETH{value: 5 ether}(address(tokenA), 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address pair = factory.getPair(address(tokenA), address(weth));
         ChPair(pair).approve(address(router), liquidity);
 
         uint256 ethBefore = alice.balance;
-        router.removeLiquidityETH(
-            address(tokenA), liquidity, 0, 0, alice, block.timestamp + 1
-        );
+        router.removeLiquidityETH(address(tokenA), liquidity, 0, 0, alice, block.timestamp + 1);
         vm.stopPrank();
 
         assertGt(alice.balance - ethBefore, 0);
@@ -184,9 +161,7 @@ contract ChRouterTest is Test {
     function test_swapExactTokensForTokens() public {
         // Large pool to keep swaps within circuit breaker (< 10% price impact)
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -195,9 +170,7 @@ contract ChRouterTest is Test {
         uint256 bobTokenBBefore = tokenB.balanceOf(bob);
 
         vm.prank(bob);
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         assertGt(amounts[1], 0);
         assertEq(tokenB.balanceOf(bob) - bobTokenBBefore, amounts[1]);
@@ -206,9 +179,7 @@ contract ChRouterTest is Test {
     function test_swapExactETHForTokens() public {
         vm.deal(alice, 200 ether);
         vm.prank(alice);
-        router.addLiquidityETH{value: 50 ether}(
-            address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 50 ether}(address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(weth);
@@ -225,9 +196,7 @@ contract ChRouterTest is Test {
     function test_swapExactTokensForETH() public {
         vm.deal(alice, 200 ether);
         vm.prank(alice);
-        router.addLiquidityETH{value: 50 ether}(
-            address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 50 ether}(address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -245,9 +214,7 @@ contract ChRouterTest is Test {
 
     function test_swapTokensForExactTokens() public {
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -256,9 +223,7 @@ contract ChRouterTest is Test {
         uint256 bobTokenABefore = tokenA.balanceOf(bob);
 
         vm.prank(bob);
-        uint256[] memory amounts = router.swapTokensForExactTokens(
-            0.5 ether, 2 ether, path, bob, block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapTokensForExactTokens(0.5 ether, 2 ether, path, bob, block.timestamp + 1);
 
         // Bob got exactly 0.5 ether of tokenB
         assertEq(amounts[amounts.length - 1], 0.5 ether);
@@ -269,9 +234,7 @@ contract ChRouterTest is Test {
     function test_swapTokensForExactETH() public {
         vm.deal(alice, 200 ether);
         vm.prank(alice);
-        router.addLiquidityETH{value: 50 ether}(
-            address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 50 ether}(address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -280,9 +243,7 @@ contract ChRouterTest is Test {
         uint256 bobEthBefore = bob.balance;
 
         vm.prank(bob);
-        uint256[] memory amounts = router.swapTokensForExactETH(
-            0.5 ether, 2 ether, path, bob, block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapTokensForExactETH(0.5 ether, 2 ether, path, bob, block.timestamp + 1);
 
         assertEq(amounts[amounts.length - 1], 0.5 ether);
         assertGe(bob.balance - bobEthBefore, 0.5 ether);
@@ -291,9 +252,7 @@ contract ChRouterTest is Test {
     function test_swapETHForExactTokens() public {
         vm.deal(alice, 200 ether);
         vm.prank(alice);
-        router.addLiquidityETH{value: 50 ether}(
-            address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidityETH{value: 50 ether}(address(tokenA), 50 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(weth);
@@ -303,9 +262,8 @@ contract ChRouterTest is Test {
         uint256 bobEthBefore = bob.balance;
 
         vm.prank(bob);
-        uint256[] memory amounts = router.swapETHForExactTokens{value: 5 ether}(
-            0.5 ether, path, bob, block.timestamp + 1
-        );
+        uint256[] memory amounts =
+            router.swapETHForExactTokens{value: 5 ether}(0.5 ether, path, bob, block.timestamp + 1);
 
         assertEq(amounts[amounts.length - 1], 0.5 ether);
         assertGe(tokenA.balanceOf(bob) - bobTokenABefore, 0.5 ether);
@@ -317,9 +275,7 @@ contract ChRouterTest is Test {
 
     function test_swap_revert_slippageProtection() public {
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -332,9 +288,7 @@ contract ChRouterTest is Test {
 
     function test_swap_revert_deadline() public {
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 10 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         address[] memory path = new address[](2);
         path[0] = address(tokenA);
@@ -348,19 +302,13 @@ contract ChRouterTest is Test {
     function test_addLiquidity_revert_slippage() public {
         // First deposit
         vm.prank(alice);
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 10 ether, 20 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 10 ether, 20 ether, 0, 0, alice, block.timestamp + 1, 0);
 
         // Second deposit with too-tight slippage
         vm.prank(bob);
         vm.expectRevert("ChRouter: INSUFFICIENT_A_AMOUNT");
         router.addLiquidity(
-            address(tokenA), address(tokenB),
-            5 ether, 5 ether,
-            5 ether, 5 ether,
-            bob, block.timestamp + 1,
-            0
+            address(tokenA), address(tokenB), 5 ether, 5 ether, 5 ether, 5 ether, bob, block.timestamp + 1, 0
         );
     }
 
@@ -374,13 +322,9 @@ contract ChRouterTest is Test {
         vm.startPrank(alice);
         tokenC.approve(address(router), type(uint256).max);
         // Create A-B pool (large enough for circuit breaker)
-        router.addLiquidity(
-            address(tokenA), address(tokenB), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0);
         // Create B-C pool
-        router.addLiquidity(
-            address(tokenB), address(tokenC), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0
-        );
+        router.addLiquidity(address(tokenB), address(tokenC), 100 ether, 100 ether, 0, 0, alice, block.timestamp + 1, 0);
         vm.stopPrank();
 
         // Bob swaps A -> B -> C
@@ -392,9 +336,7 @@ contract ChRouterTest is Test {
         uint256 bobTokenCBefore = tokenC.balanceOf(bob);
 
         vm.prank(bob);
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         assertEq(amounts.length, 3);
         assertGt(tokenC.balanceOf(bob) - bobTokenCBefore, 0);
@@ -413,9 +355,7 @@ contract ChRouterTest is Test {
         uint256 bobTokenABefore = tokenA.balanceOf(bob);
 
         vm.prank(bob);
-        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         assertGt(tokenA.balanceOf(bob) - bobTokenABefore, 0);
     }
@@ -438,9 +378,7 @@ contract ChRouterTest is Test {
         uint256 bobEthBefore = bob.balance;
 
         vm.prank(bob);
-        router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForETHSupportingFeeOnTransferTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         assertGt(bob.balance - bobEthBefore, 0);
     }
@@ -463,9 +401,7 @@ contract ChRouterTest is Test {
         uint256 bobFeeTokenBefore = feeToken.balanceOf(bob);
 
         vm.prank(bob);
-        router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: 1 ether}(
-            0, path, bob, block.timestamp + 1
-        );
+        router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: 1 ether}(0, path, bob, block.timestamp + 1);
 
         // feeToken has 2% transfer fee, so bob receives less, but should still receive some
         assertGt(feeToken.balanceOf(bob) - bobFeeTokenBefore, 0);
@@ -480,9 +416,7 @@ contract ChRouterTest is Test {
 
         vm.prank(bob);
         vm.expectRevert("ChRouter: INSUFFICIENT_OUTPUT_AMOUNT");
-        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            1 ether, 100 ether, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1 ether, 100 ether, path, bob, block.timestamp + 1);
     }
 
     // ============ HELPERS ============

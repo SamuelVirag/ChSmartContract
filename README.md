@@ -39,37 +39,17 @@ ChRouter ──────────────> User-facing interface
 
 ## Security Approach
 
-### Defense Patterns
 - **Checks-Effects-Interactions** in every state-changing function
 - **OpenZeppelin ReentrancyGuard** on all pair functions
 - **`nonReentrantView`** on ALL price-sensitive views (getReserves, getSwapFee, emaPrice0/1)
 - **`isLocked()`** public function for cross-contract composability safety
 - **Safe transfer wrappers** handling non-standard ERC20s (USDT missing returns, fee-on-transfer)
 - **All rounding favors the pool/LPs**, never the trader
-- **Zero-value transfer guards** in skim() for tokens that revert on transfer(0)
-
-### Audit Trail
-
-Three audit passes plus adversarial testing with the jury's own tool:
-
-| Pass | Method | Findings | Fixed |
-|---|---|---|---|
-| **Pass 1** | Manual audit informed by 119-note web3 knowledge vault | 2 High, 4 Medium, 3 Low | All High + 1 Low fixed |
-| **Pass 2** | Deep audit covering all 8 vault topic maps (~40 notes) | 2 Medium, 6 Low | Both Medium fixed |
-| **Pass 3** | Grimoire adversarial audit (jury tool simulation) | 2 Medium, 4 Low, 3 Info | All fixed |
-| **Static** | Slither (68 results, all false positives) + Aderyn | -- | -- |
-| **Formal** | Halmos symbolic verification (fee bounds proven) | -- | -- |
-
-Key findings discovered and fixed:
-- Read-only reentrancy on view functions during flash swaps
-- Dynamic fee self-lowering via pre-swap manipulation
-- EMA compounding via sync() loop and multi-swap same-block attacks
-- Circuit breaker bypass via swap splitting (now uses per-block baseline)
-- Missing fee-on-transfer support in removeLiquidityETH
+- **Zero-value transfer guards** for tokens that revert on transfer(0)
 
 ## Testing
 
-**145 tests across 12 suites. 0 failures.**
+**137+ tests across 13 suites. 0 failures.**
 
 ```bash
 forge test
@@ -84,18 +64,17 @@ forge test
 | FeeOnTransfer | 4 | Deflationary token support |
 | LowDecimalTokens | 16 | 2/6/8/18 decimals, mixed pairs, round-trip profitability fuzz |
 | Invariants | 6 | Single-actor, 16K+ random calls: k, solvency, supply, EMA, fees |
-| MultiActorInvariant | 6 | 3-actor, 16K+ random calls: same + LP conservation + extraction bounds |
-| CrossContract | 7 | Read-only reentrancy defense, mock lending protocol, isLocked() |
-| EconomicAttacks | 8 | Monopoly LP, self-sandwich, EMA gaming, circuit breaker boundary, flash surcharge |
-| FormalVerification | 6 | amountOut < reserve, rounding direction, k preservation, round-trip, fee bounds |
-| PoC (Grimoire) | 3+ | Proof-of-concept tests for fixed vulnerabilities |
-| ForkTest | 6 | Mainnet fork with real USDC, USDT, WBTC, WETH. Multi-hop, remove liquidity. |
+| MultiActorInvariant | 6 | 3-actor, 16K+ random calls: LP conservation, extraction bounds |
+| CrossContract | 7 | Read-only reentrancy defense, mock lending protocol |
+| EconomicAttacks | 8 | Monopoly LP, self-sandwich, EMA gaming, circuit breaker boundary |
+| FormalVerification | 6 | amountOut < reserve, rounding direction, k preservation, round-trip |
+| ForkTest | 6 | Mainnet fork with real USDC, USDT, WBTC, WETH |
 
 ### Key Properties Verified
 - **k never decreases** -- fuzz (1000 runs) + invariant (16K calls) + formal
 - **Round-trip swaps never profitable** -- fuzz across 2, 6, 18 decimal tokens
 - **No value extraction** -- 3 independent actors, 16K random interactions
-- **Fee always in [30, 100] bps** -- Halmos formally proven
+- **Fee always in [30, 100] bps** -- formally proven
 - **Pair always solvent** -- balance >= reserves after any operation sequence
 
 ## Live Deployment (Sepolia Testnet)
@@ -116,20 +95,14 @@ foundryup
 # Build
 forge build
 
-# Test (all unit, fuzz, invariant, economic, formal tests)
+# Test
 forge test
-
-# Test with verbosity
-forge test -vv
 
 # Fork test with real mainnet tokens (requires RPC URL)
 forge test --match-contract ForkTest --fork-url $ETH_RPC_URL -vv
 
 # Gas report
 forge test --gas-report
-
-# Static analysis
-slither . --filter-paths "lib/,test/"
 
 # Deploy to testnet
 WETH_ADDRESS=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
@@ -145,25 +118,11 @@ src/
   ChRouter.sol          User-facing router with all protections
   interfaces/           IChPair, IChFactory, IChCallee, IWETH
   libraries/            ChLibrary, Math, UQ112x112
-test/
-  ChPair.t.sol          Core pair tests + fuzz
-  ChFactory.t.sol       Factory + governance tests
-  ChRouter.t.sol        Router tests
-  SecurityAttacks.t.sol Attack simulations
-  Invariants.t.sol      Single-actor invariant tests
-  MultiActorInvariant.t.sol  Multi-actor invariant tests
-  EconomicAttacks.t.sol Game theory tests
-  CrossContract.t.sol   Composability tests
-  LowDecimalTokens.t.sol  Precision tests
-  FormalVerification.t.sol  Property-based verification
-  FeeOnTransfer.t.sol   FOT token tests
-  ForkTest.t.sol        Mainnet fork with real tokens
-  mocks/                MockERC20, WETH9, FeeOnTransferToken
+test/                   13 test suites (unit, fuzz, invariant, economic, fork, formal)
 script/
-  Deploy.s.sol          Foundry deployment script (Factory + Router)
-knowledge/              Web3 security knowledge vault (119+ notes, 8 topic maps)
+  Deploy.s.sol          Foundry deployment script
 docs/
-  WHITEPAPER.md         Technical design rationale and threat model
+  WHITEPAPER.md         Technical design rationale
 ```
 
 ## Technology
@@ -171,7 +130,7 @@ docs/
 - **Solidity** 0.8.28 (pinned, not floating)
 - **Foundry** (Forge for testing, forge-std for assertions/cheatcodes)
 - **OpenZeppelin** v5.6.1 (ERC20, ReentrancyGuard with nonReentrantView)
-- **EVM target**: Cancun (transient storage available)
+- **EVM target**: Cancun
 
 ## License
 

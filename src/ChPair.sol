@@ -125,11 +125,7 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
     }
 
     /// @dev Internal reserves accessor — no reentrancy check
-    function _getReserves()
-        private
-        view
-        returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
-    {
+    function _getReserves() private view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
@@ -311,8 +307,7 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
             uint256 effectiveReserve1 = uint256(_reserve1) + VIRTUAL_OFFSET;
 
             liquidity = Math.min(
-                (amount0 * effectiveSupply) / effectiveReserve0,
-                (amount1 * effectiveSupply) / effectiveReserve1
+                (amount0 * effectiveSupply) / effectiveReserve0, (amount1 * effectiveSupply) / effectiveReserve1
             );
             require(liquidity > 0, "ChPair: INSUFFICIENT_LIQUIDITY_MINTED");
         }
@@ -409,8 +404,7 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
             uint256 balance0Adjusted = balance0 * BPS - (amount0In * feeBps);
             uint256 balance1Adjusted = balance1 * BPS - (amount1In * feeBps);
             require(
-                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * (BPS ** 2),
-                "ChPair: K"
+                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * (BPS ** 2), "ChPair: K"
             );
         }
 
@@ -437,12 +431,7 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
     /// @notice Force reserves to match current token balances
     /// @dev Safety function for rebasing tokens. EMA only updates once per block.
     function sync() external nonReentrant {
-        _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this)),
-            reserve0,
-            reserve1
-        );
+        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
     // ============ INTERNAL ============

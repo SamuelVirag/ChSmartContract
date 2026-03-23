@@ -118,10 +118,16 @@ contract FormalVerificationTest is Test {
 
         if (direction) {
             token0.transfer(address(pair), amountIn);
-            try pair.swap(0, amountOut, address(this), "") {} catch { return; }
+            try pair.swap(0, amountOut, address(this), "") {}
+                catch {
+                return;
+            }
         } else {
             token1.transfer(address(pair), amountIn);
-            try pair.swap(amountOut, 0, address(this), "") {} catch { return; }
+            try pair.swap(amountOut, 0, address(this), "") {}
+                catch {
+                return;
+            }
         }
 
         (uint112 newR0, uint112 newR1,) = pair.getReserves();
@@ -144,7 +150,10 @@ contract FormalVerificationTest is Test {
         vm.assume(out1 > 0);
 
         token0.transfer(address(pair), amountIn);
-        try pair.swap(0, out1, address(this), "") {} catch { return; }
+        try pair.swap(0, out1, address(this), "") {}
+            catch {
+            return;
+        }
 
         // Swap token1 → token0
         (r0, r1,) = pair.getReserves();
@@ -152,7 +161,10 @@ contract FormalVerificationTest is Test {
         vm.assume(out0 > 0);
 
         token1.transfer(address(pair), out1);
-        try pair.swap(out0, 0, address(this), "") {} catch { return; }
+        try pair.swap(out0, 0, address(this), "") {}
+            catch {
+            return;
+        }
 
         uint256 balanceAfter = token0.balanceOf(address(this));
 

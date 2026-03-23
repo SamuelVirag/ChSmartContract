@@ -73,9 +73,7 @@ contract FeeOnTransferTest is Test {
         uint256 bobNormalBefore = normalToken.balanceOf(bob);
 
         vm.prank(bob);
-        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         // Bob received some normal tokens
         assertGt(normalToken.balanceOf(bob) - bobNormalBefore, 0);
@@ -91,9 +89,7 @@ contract FeeOnTransferTest is Test {
 
         vm.prank(bob);
         vm.expectRevert("ChRouter: INSUFFICIENT_OUTPUT_AMOUNT");
-        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            1 ether, 100 ether, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1 ether, 100 ether, path, bob, block.timestamp + 1);
     }
 
     /// @notice Fee-on-transfer with ETH pair
@@ -118,9 +114,7 @@ contract FeeOnTransferTest is Test {
         uint256 bobEthBefore = bob.balance;
 
         vm.prank(bob);
-        router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            1 ether, 0, path, bob, block.timestamp + 1
-        );
+        router.swapExactTokensForETHSupportingFeeOnTransferTokens(1 ether, 0, path, bob, block.timestamp + 1);
 
         assertGt(bob.balance - bobEthBefore, 0);
     }

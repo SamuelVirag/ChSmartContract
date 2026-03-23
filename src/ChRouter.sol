@@ -138,8 +138,9 @@ contract ChRouter {
         address to,
         uint256 deadline
     ) public ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
-        (amountToken, amountETH) =
-            removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+        (amountToken, amountETH) = removeLiquidity(
+            token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline
+        );
         _safeTransfer(token, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         _safeTransferETH(to, amountETH);
@@ -156,8 +157,7 @@ contract ChRouter {
         address to,
         uint256 deadline
     ) public ensure(deadline) returns (uint256 amountETH) {
-        (, amountETH) =
-            removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+        (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         // Use actual balance — fee-on-transfer tokens deliver less than reported
         _safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
         IWETH(WETH).withdraw(amountETH);
@@ -375,27 +375,18 @@ contract ChRouter {
         return ChLibrary.getAmountIn(amountOut, reserveIn, reserveOut, feeBps);
     }
 
-    function getAmountsOut(uint256 amountIn, address[] calldata path)
-        external
-        view
-        returns (uint256[] memory amounts)
-    {
+    function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts) {
         return ChLibrary.getAmountsOut(factory, amountIn, path);
     }
 
-    function getAmountsIn(uint256 amountOut, address[] calldata path)
-        external
-        view
-        returns (uint256[] memory amounts)
-    {
+    function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts) {
         return ChLibrary.getAmountsIn(factory, amountOut, path);
     }
 
     // ============ INTERNAL HELPERS ============
 
     function _safeTransfer(address token, address to, uint256 value) private {
-        (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, value));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "ChRouter: TRANSFER_FAILED");
     }
 

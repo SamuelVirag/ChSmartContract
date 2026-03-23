@@ -10,11 +10,11 @@ out/
 .env
 *.key
 
-# Knowledge vault git (has its own repo)
-knowledge/.git/
+# Knowledge vault (separate repo, contains audit research)
+knowledge/
 
-# Claude memory (session-specific)
-.claude/memory/
+# Claude Code (audit skills, memory, settings)
+.claude/
 
 # OS files
 .DS_Store

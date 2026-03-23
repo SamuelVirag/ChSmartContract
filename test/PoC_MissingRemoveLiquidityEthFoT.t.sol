@@ -66,12 +66,12 @@ contract PoC_MissingRemoveLiquidityEthFoT is Test {
         // to avoid slippage revert during setup.
         router.addLiquidityETH{value: INITIAL_ETH}(
             address(fot),
-            INITIAL_FOT,   // amountTokenDesired
-            0,             // amountTokenMin (flexible for FoT)
-            0,             // amountETHMin
-            user,          // LP tokens go to user
+            INITIAL_FOT, // amountTokenDesired
+            0, // amountTokenMin (flexible for FoT)
+            0, // amountETHMin
+            user, // LP tokens go to user
             block.timestamp + 1,
-            0              // minLiquidity
+            0 // minLiquidity
         );
         vm.stopPrank();
 
@@ -106,8 +106,8 @@ contract PoC_MissingRemoveLiquidityEthFoT is Test {
         router.removeLiquidityETH(
             address(fot),
             lpToRemove,
-            0,              // amountTokenMin
-            0,              // amountETHMin
+            0, // amountTokenMin
+            0, // amountETHMin
             user,
             block.timestamp + 1
         );
@@ -144,9 +144,9 @@ contract PoC_MissingRemoveLiquidityEthFoT is Test {
             address(fot),
             address(weth),
             lpToRemove,
-            0,              // amountAMin
-            0,              // amountBMin
-            user,           // tokens go directly to user, bypassing router
+            0, // amountAMin
+            0, // amountBMin
+            user, // tokens go directly to user, bypassing router
             block.timestamp + 1
         );
 
@@ -196,14 +196,7 @@ contract PoC_MissingRemoveLiquidityEthFoT is Test {
 
         // Step 1: removeLiquidityETH reverts
         vm.expectRevert();
-        router.removeLiquidityETH(
-            address(fot),
-            lpToRemove,
-            0,
-            0,
-            user,
-            block.timestamp + 1
-        );
+        router.removeLiquidityETH(address(fot), lpToRemove, 0, 0, user, block.timestamp + 1);
 
         emit log("  REVERTED as expected");
         emit log("---");
@@ -214,15 +207,7 @@ contract PoC_MissingRemoveLiquidityEthFoT is Test {
         uint256 fotBefore = fot.balanceOf(user);
         uint256 ethBefore = user.balance;
 
-        router.removeLiquidity(
-            address(fot),
-            address(weth),
-            lpToRemove,
-            0,
-            0,
-            user,
-            block.timestamp + 1
-        );
+        router.removeLiquidity(address(fot), address(weth), lpToRemove, 0, 0, user, block.timestamp + 1);
 
         // Unwrap WETH to ETH
         uint256 wethBalance = IERC20(address(weth)).balanceOf(user);
