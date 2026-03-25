@@ -38,9 +38,10 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
     /// @notice Additional fee charged on flash swaps, in basis points (0.09%)
     uint256 public constant FLASH_FEE_BPS = 9;
 
-    /// @notice Maximum allowed price impact per block in basis points (10%)
-    /// @dev Circuit breaker uses per-block baseline: all swaps within a block are compared
-    ///      against the reserves at the start of the block, preventing split-swap bypass.
+    /// @notice Maximum allowed cumulative price impact per block in basis points (10%)
+    /// @dev Circuit breaker snapshots reserves on the first swap of each block. All subsequent
+    ///      swaps compare against that snapshot. Prevents split-swap bypass where N small swaps
+    ///      each individually pass but cumulatively exceed the threshold.
     uint256 public constant MAX_PRICE_IMPACT_BPS = 1000;
 
     /// @notice EMA smoothing factor in basis points (5% = new observation weight)
@@ -226,26 +227,36 @@ contract ChPair is IChPair, ERC20, ReentrancyGuard {
     // ============ CIRCUIT BREAKER ============
 
     /// @dev Reverts if cumulative price impact within the current block exceeds threshold.
-    ///      Uses per-block baseline: the first swap in a block snapshots the starting reserves,
-    ///      and all subsequent swaps are compared against that baseline. This prevents
-    ///      split-swap bypass where N small swaps each pass individually but compound to
-    ///      exceed the threshold.
+    ///      On the first swap in a block, the pre-swap reserves are stored as the baseline.
+    ///      All subsequent swaps in the same block compare their post-swap balances against
+    ///      this fixed start-of-block baseline — NOT against the previous swap's reserves.
+    ///      This prevents split-swap bypass where N small swaps each pass individually
+    ///      but compound to exceed the threshold.
+    /// @param preSwapReserve0 Reserve0 before this swap (used as baseline on first swap of block)
+    /// @param preSwapReserve1 Reserve1 before this swap (used as baseline on first swap of block)
+    /// @param postSwapBalance0 Actual token0 balance after this swap
+    /// @param postSwapBalance1 Actual token1 balance after this swap
     function _checkCircuitBreaker(
-        uint256 _reserveBefore0,
-        uint256 _reserveBefore1,
-        uint256 reserveAfter0,
-        uint256 reserveAfter1
+        uint256 preSwapReserve0,
+        uint256 preSwapReserve1,
+        uint256 postSwapBalance0,
+        uint256 postSwapBalance1
     ) private {
-        // Set baseline on first swap of the block
+        // First swap in this block: snapshot pre-swap reserves as the baseline
+        // Subsequent swaps: baseline stays unchanged (still the start-of-block snapshot)
         if (cbBaselineBlock != uint32(block.number)) {
-            cbBaselineReserve0 = uint112(_reserveBefore0);
-            cbBaselineReserve1 = uint112(_reserveBefore1);
+            cbBaselineReserve0 = uint112(preSwapReserve0);
+            cbBaselineReserve1 = uint112(preSwapReserve1);
             cbBaselineBlock = uint32(block.number);
         }
 
-        // Compare against start-of-block baseline, not per-swap reserves
-        uint256 crossBefore = uint256(cbBaselineReserve1) * reserveAfter0;
-        uint256 crossAfter = reserveAfter1 * uint256(cbBaselineReserve0);
+        // Compare post-swap balances against start-of-block baseline
+        // price_baseline = cbBaselineReserve1 / cbBaselineReserve0
+        // price_current  = postSwapBalance1  / postSwapBalance0
+        // deviation = |price_current / price_baseline - 1| in basis points
+        // Cross-multiplication avoids division:
+        uint256 crossBefore = uint256(cbBaselineReserve1) * postSwapBalance0;
+        uint256 crossAfter = postSwapBalance1 * uint256(cbBaselineReserve0);
 
         uint256 deviation;
         if (crossAfter > crossBefore) {
